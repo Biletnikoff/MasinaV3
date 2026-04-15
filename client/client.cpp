@@ -33,6 +33,7 @@
 int LOCAL_TIMEOUT = 300000;
 int FAILSAFE_TIMEOUT = 5000;
 int STABILIZE_TIMEOUT = 250;
+bool use_elrs_switch = true;
 int ELRS_SWITCH_PIN = 1;
 int HOVER_VALUE = 1200;
 std::string hostname;
@@ -104,6 +105,8 @@ bool readConfig(const std::string& filename) {
 				FAILSAFE_TIMEOUT = std::stoi(value);
 			else if (key == "STABILIZE_TIMEOUT")
 				STABILIZE_TIMEOUT = std::stoi(value);
+			else if (key == "USE_ELRS_SWITCH")
+				use_elrs_switch = std::stoi(value) != 0;
 			else if (key == "ELRS_SWITCH_PIN")
 				ELRS_SWITCH_PIN = std::stoi(value);
 			else if (key == "HOVER_VALUE")
@@ -299,10 +302,12 @@ int main()
 					auto elapsedTimeValid = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastValidPayload).count();
 					if (elapsedTimeValid >= LOCAL_TIMEOUT)
 					{
-						//No data for 5m - Switch to local controller
+						//No data for 5m - Switch CRSF mux to local ELRS (dual-radio builds only)
 						std::cerr << "LOCAL_TIMEOUT\n";
-						std::string command = "gpio clear " + std::to_string(ELRS_SWITCH_PIN);
-						std::system(command.c_str());
+						if (use_elrs_switch) {
+							std::string command = "gpio clear " + std::to_string(ELRS_SWITCH_PIN);
+							std::system(command.c_str());
+						}
 					}
 					else if (elapsedTimeValid >= FAILSAFE_TIMEOUT)
 					{
@@ -398,8 +403,10 @@ int main()
 						fsMode = std::stoi(matches[10]) & 1;
 						static bool lastRemoteState = false;
 						if (remote != lastRemoteState) {
-							std::string command = remote ? "gpio set " + std::to_string(ELRS_SWITCH_PIN) : "gpio clear " + std::to_string(ELRS_SWITCH_PIN);
-							std::system(command.c_str());
+							if (use_elrs_switch) {
+								std::string command = remote ? "gpio set " + std::to_string(ELRS_SWITCH_PIN) : "gpio clear " + std::to_string(ELRS_SWITCH_PIN);
+								std::system(command.c_str());
+							}
 							lastRemoteState = remote;
 						}
 						

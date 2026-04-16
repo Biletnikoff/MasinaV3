@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MasinaV3 – LTE-Only Schematic</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Oxanium:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --wire-crsf: #00e5ff;
+    --wire-telem: #d050ff;
+    --wire-gps: #39ff14;
+    --wire-5v: #ff3030;
+    --wire-usb: #ffffff;
+    --wire-cam: #ffab00;
+    --label: #e0e0e0;
+    --box-stroke: #444;
+    --box-fill: #131313;
+    --accent: #00e5ff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: auto;
+  }
+  svg { max-width: 100%; height: auto; }
+
+  .box { fill: var(--box-fill); stroke: var(--box-stroke); stroke-width: 1.5; rx: 6; }
+  .lbl { fill: var(--label); font-family: 'Oxanium', sans-serif; font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+  .sub { fill: #666; font-family: 'JetBrains Mono', monospace; font-weight: 400; font-size: 11px; text-anchor: middle; dominant-baseline: central; }
+  .pin { fill: #999; font-family: 'JetBrains Mono', monospace; font-size: 10px; dominant-baseline: central; }
+  .wlbl { font-family: 'Oxanium', sans-serif; font-weight: 600; dominant-baseline: central; }
+
+  .w { fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .w-crsf { stroke: var(--wire-crsf); }
+  .w-tel { stroke: var(--wire-telem); }
+  .w-gps { stroke: var(--wire-gps); }
+  .w-5v { stroke: var(--wire-5v); stroke-width: 2; }
+  .w-vbat { stroke: var(--wire-5v); stroke-width: 3; }
+  .w-usb { stroke: var(--wire-usb); stroke-width: 2; stroke-dasharray: 5 3; }
+  .w-cam { stroke: var(--wire-cam); stroke-width: 5; opacity: 0.55; stroke-linecap: round; }
+
+  .g-crsf { filter: drop-shadow(0 0 5px rgba(0,229,255,0.5)); }
+  .g-tel { filter: drop-shadow(0 0 5px rgba(208,80,255,0.5)); }
+  .g-gps { filter: drop-shadow(0 0 5px rgba(57,255,20,0.5)); }
+  .g-5v { filter: drop-shadow(0 0 3px rgba(255,48,48,0.4)); }
+
+  @keyframes dash { to { stroke-dashoffset: -16; } }
+  .anim { animation: dash 0.8s linear infinite; }
+
+  @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .fi { animation: fadeUp 0.5s ease-out both; }
+</style>
+</head>
+<body>
+
+<svg viewBox="0 0 1100 780" xmlns="http://www.w3.org/2000/svg">
+
+  <defs>
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="3" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.03"/></feComponentTransfer>
+      <feBlend in="SourceGraphic" mode="multiply"/>
+    </filter>
+    <marker id="ac" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="var(--wire-crsf)"/>
+    </marker>
+    <marker id="ag" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="var(--wire-gps)"/>
+    </marker>
+  </defs>
+
+  <rect width="1100" height="780" fill="var(--bg)" filter="url(#grain)"/>
+
+  <!-- Title -->
+  <text x="40" y="38" fill="var(--accent)" font-family="Oxanium" font-weight="700" font-size="24" class="fi">MasinaV3 — LTE Only Wiring</text>
+  <text x="40" y="58" fill="#555" font-family="JetBrains Mono" font-size="11" class="fi" style="animation-delay:.05s">No ELRS receiver • No TS5A23157 switch • Direct Pi→FC CRSF • GPS module on FC UART</text>
+
+  <!-- ==================== COMPONENTS ==================== -->
+
+  <!-- FC -->
+  <g class="fi" style="animation-delay:.1s">
+    <rect x="780" y="95" width="180" height="180" class="box" style="stroke:#666"/>
+    <text x="870" y="160" class="lbl" font-size="30">FC</text>
+    <text x="870" y="192" class="sub">Betaflight</text>
+    <!-- CRSF UART pins on left -->
+    <text x="768" y="140" class="pin" text-anchor="end" font-size="11">TX</text>
+    <text x="768" y="175" class="pin" text-anchor="end" font-size="11">RX</text>
+    <!-- GPS UART pin on left, lower -->
+    <text x="768" y="250" class="pin" text-anchor="end" font-size="11">GPS RX</text>
+    <circle cx="780" cy="140" r="3.5" fill="var(--wire-telem)"/>
+    <circle cx="780" cy="175" r="3.5" fill="var(--wire-crsf)"/>
+    <circle cx="780" cy="250" r="3.5" fill="var(--wire-gps)"/>
+  </g>
+
+  <!-- ESC -->
+  <g class="fi" style="animation-delay:.15s">
+    <rect x="830" y="340" width="130" height="90" class="box"/>
+    <text x="895" y="378" class="lbl" font-size="22">ESC</text>
+    <text x="895" y="403" class="sub">4-in-1</text>
+  </g>
+
+  <!-- XT60 -->
+  <g class="fi" style="animation-delay:.2s">
+    <rect x="990" y="340" width="80" height="90" class="box" style="stroke:#ff3030"/>
+    <text x="1030" y="378" fill="#ff3030" font-family="Oxanium" font-weight="700" font-size="17" text-anchor="middle" dominant-baseline="central">XT60</text>
+    <text x="1030" y="403" class="sub">VBAT</text>
+  </g>
+
+  <!-- 5V Buck -->
+  <g class="fi" style="animation-delay:.25s">
+    <rect x="440" y="95" width="170" height="65" class="box" style="stroke:#ff3030"/>
+    <text x="525" y="121" class="lbl" font-size="18">5V Buck</text>
+    <text x="525" y="143" class="sub">VBAT → 5V</text>
+  </g>
+
+  <!-- GPS Module -->
+  <g class="fi" style="animation-delay:.3s">
+    <rect x="440" y="210" width="170" height="70" class="box" style="stroke:var(--wire-gps)"/>
+    <text x="525" y="238" class="lbl" font-size="18" fill="var(--wire-gps)">GPS</text>
+    <text x="525" y="260" class="sub">BN-220 / M10</text>
+  </g>
+
+  <!-- Pi Zero 2 -->
+  <g class="fi" style="animation-delay:.35s">
+    <rect x="250" y="360" width="330" height="170" class="box" style="stroke:var(--accent)"/>
+    <text x="415" y="430" class="lbl" font-size="24">Pi Zero 2</text>
+    <text x="415" y="457" class="sub">Raspberry Pi Zero 2 W</text>
+    <!-- Right-side pins -->
+    <text x="590" y="385" class="pin" font-size="10" text-anchor="end">UART TX</text>
+    <text x="590" y="415" class="pin" font-size="10" text-anchor="end">UART RX</text>
+    <text x="590" y="497" class="pin" font-size="10" text-anchor="end">CSI</text>
+    <!-- Left-side pin -->
+    <text x="240" y="435" class="pin" text-anchor="end" font-size="10">USB OTG</text>
+    <!-- Bottom power -->
+    <text x="415" y="540" class="pin" text-anchor="middle" font-size="10">5V / GND</text>
+  </g>
+
+  <!-- E3372 LTE -->
+  <g class="fi" style="animation-delay:.4s">
+    <rect x="30" y="385" width="155" height="100" class="box" style="stroke:#fff"/>
+    <text x="108" y="425" class="lbl" font-size="18">E3372</text>
+    <text x="108" y="448" class="sub">Huawei LTE</text>
+    <text x="108" y="466" class="sub">USB + SIM</text>
+  </g>
+
+  <!-- Pi Camera -->
+  <g class="fi" style="animation-delay:.45s">
+    <rect x="780" y="500" width="140" height="80" class="box" style="stroke:var(--wire-cam)"/>
+    <text x="850" y="533" class="lbl" font-size="16" fill="var(--wire-cam)">Pi Camera</text>
+    <text x="850" y="557" class="sub">CSI Ribbon</text>
+  </g>
+
+  <!-- ==================== WIRES ==================== -->
+
+  <!-- CRSF: Pi UART TX → FC RX (cyan) -->
+  <g class="g-crsf fi" style="animation-delay:.5s">
+    <path class="w w-crsf" d="M580,385 L730,385 L730,175 L780,175" marker-end="url(#ac)"/>
+  </g>
+  <g class="fi" style="animation-delay:.52s">
+    <rect x="732" y="270" width="22" height="70" rx="3" fill="var(--bg)" opacity="0.95"/>
+    <text x="743" y="308" class="wlbl" text-anchor="middle" fill="var(--wire-crsf)" font-size="11" transform="rotate(-90,743,308)">CRSF →</text>
+  </g>
+
+  <!-- Telemetry: FC TX → Pi UART RX (purple) -->
+  <g class="g-tel fi" style="animation-delay:.55s">
+    <path class="w w-tel" d="M780,140 L700,140 L700,415 L580,415"/>
+  </g>
+  <g class="fi" style="animation-delay:.57s">
+    <rect x="690" y="270" width="22" height="85" rx="3" fill="var(--bg)" opacity="0.95"/>
+    <text x="701" y="315" class="wlbl" text-anchor="middle" fill="var(--wire-telem)" font-size="11" transform="rotate(-90,701,315)">← Telemetry</text>
+  </g>
+
+  <!-- GPS: GPS TX → FC GPS RX (green) -->
+  <g class="g-gps fi" style="animation-delay:.6s">
+    <path class="w w-gps" d="M610,245 L660,245 L660,250 L780,250" marker-end="url(#ag)"/>
+  </g>
+  <g class="fi" style="animation-delay:.62s">
+    <rect x="643" y="228" width="55" height="15" rx="2" fill="var(--bg)" opacity="0.9"/>
+    <text x="670" y="239" class="wlbl" text-anchor="middle" fill="var(--wire-gps)" font-size="10">NMEA</text>
+  </g>
+
+  <!-- USB: E3372 → Pi OTG (white dashed) -->
+  <g class="fi" style="animation-delay:.65s">
+    <path class="w w-usb anim" d="M185,435 L250,435"/>
+    <rect x="195" y="417" width="33" height="14" rx="2" fill="var(--bg)" opacity="0.9"/>
+    <text x="211" y="426" class="wlbl" text-anchor="middle" fill="var(--wire-usb)" font-size="10">USB</text>
+  </g>
+
+  <!-- Camera ribbon: Pi CSI → Camera (amber thick) -->
+  <g class="fi" style="animation-delay:.7s">
+    <path class="w w-cam" d="M580,497 L680,520 L780,535"/>
+    <rect x="640" y="503" width="55" height="14" rx="2" fill="var(--bg)" opacity="0.9"/>
+    <text x="667" y="512" class="wlbl" text-anchor="middle" fill="var(--wire-cam)" font-size="10">Ribbon</text>
+  </g>
+
+  <!-- 5V: Buck → Pi (5V red thin) -->
+  <g class="g-5v fi" style="animation-delay:.75s">
+    <path class="w w-5v" d="M525,160 L525,190 L415,190 L415,360"/>
+    <rect x="425" y="182" width="28" height="14" rx="2" fill="var(--bg)" opacity="0.9"/>
+    <text x="439" y="191" class="wlbl" text-anchor="middle" fill="var(--wire-5v)" font-size="10">5V</text>
+  </g>
+
+  <!-- 5V: Buck → GPS (dashed red, power tap) -->
+  <g class="g-5v fi" style="animation-delay:.77s">
+    <path class="w w-5v" d="M480,160 L480,210" stroke-dasharray="3 2"/>
+    <text x="465" y="190" class="pin" font-size="9" fill="#ff3030">5V</text>
+  </g>
+
+  <!-- VBAT: XT60 → ESC -->
+  <g class="fi" style="animation-delay:.8s">
+    <path class="w w-vbat" d="M990,385 L960,385"/>
+    <text x="975" y="374" class="wlbl" text-anchor="middle" fill="var(--wire-5v)" font-size="10">VBAT</text>
+  </g>
+
+  <!-- VBAT: XT60 → 5V Buck (along top edge) -->
+  <g class="fi" style="animation-delay:.83s">
+    <path class="w w-vbat" d="M1030,340 L1030,76 L610,76 L610,110"/>
+    <rect x="780" y="64" width="48" height="15" rx="2" fill="var(--bg)" opacity="0.9"/>
+    <text x="804" y="74" class="wlbl" text-anchor="middle" fill="var(--wire-5v)" font-size="10">VBAT</text>
+  </g>
+
+  <!-- ==================== LEGEND / NOTES ==================== -->
+
+  <!-- Legend -->
+  <g class="fi" style="animation-delay:.9s">
+    <rect x="30" y="590" width="230" height="168" rx="5" fill="#0f0f0f" stroke="#2a2a2a" stroke-width="1"/>
+    <text x="50" y="614" fill="#555" font-family="Oxanium" font-weight="600" font-size="12">LEGEND</text>
+
+    <line x1="50" y1="638" x2="85" y2="638" stroke="var(--wire-crsf)" stroke-width="2.5"/>
+    <text x="95" y="642" class="pin" font-size="11" fill="#bbb">CRSF RC (Pi → FC)</text>
+
+    <line x1="50" y1="660" x2="85" y2="660" stroke="var(--wire-telem)" stroke-width="2.5"/>
+    <text x="95" y="664" class="pin" font-size="11" fill="#bbb">Telemetry (FC → Pi)</text>
+
+    <line x1="50" y1="682" x2="85" y2="682" stroke="var(--wire-gps)" stroke-width="2.5"/>
+    <text x="95" y="686" class="pin" font-size="11" fill="#bbb">GPS (GPS → FC)</text>
+
+    <line x1="50" y1="704" x2="85" y2="704" stroke="var(--wire-5v)" stroke-width="2"/>
+    <text x="95" y="708" class="pin" font-size="11" fill="#bbb">5V / VBAT Power</text>
+
+    <line x1="50" y1="726" x2="85" y2="726" stroke="white" stroke-width="2" stroke-dasharray="5 3"/>
+    <text x="95" y="730" class="pin" font-size="11" fill="#bbb">USB (E3372 → Pi)</text>
+
+    <line x1="50" y1="748" x2="85" y2="748" stroke="var(--wire-cam)" stroke-width="4" opacity="0.6"/>
+    <text x="95" y="752" class="pin" font-size="11" fill="#bbb">Camera ribbon</text>
+  </g>
+
+  <!-- Changes -->
+  <g class="fi" style="animation-delay:.93s">
+    <rect x="290" y="590" width="400" height="168" rx="5" fill="#0f0f0f" stroke="#2a2a2a" stroke-width="1"/>
+    <text x="310" y="614" fill="#555" font-family="Oxanium" font-weight="600" font-size="12">CHANGES FROM ORIGINAL</text>
+
+    <text x="310" y="638" class="pin" font-size="11" fill="#e55">&#x2717;  Removed ELRS 2.4G receiver</text>
+    <text x="310" y="658" class="pin" font-size="11" fill="#e55">&#x2717;  Removed TS5A23157 analog switch</text>
+    <text x="310" y="678" class="pin" font-size="11" fill="#e55">&#x2717;  Removed CRSF switch GPIO signal</text>
+    <text x="310" y="704" class="pin" font-size="11" fill="#5e5">&#x2713;  Pi UART → FC directly (bidirectional CRSF)</text>
+    <text x="310" y="724" class="pin" font-size="11" fill="#5e5">&#x2713;  Added GPS module (BN-220/M10) → FC GPS UART</text>
+    <text x="310" y="744" class="pin" font-size="11" fill="#5e5">&#x2713;  GPS data reaches Pi via CRSF telemetry (0x02)</text>
+  </g>
+
+  <!-- Data flow -->
+  <g class="fi" style="animation-delay:.96s">
+    <rect x="720" y="590" width="350" height="168" rx="5" fill="#0f0f0f" stroke="#2a2a2a" stroke-width="1"/>
+    <text x="740" y="614" fill="#555" font-family="Oxanium" font-weight="600" font-size="12">DATA FLOW</text>
+
+    <text x="740" y="641" class="pin" font-size="11" fill="var(--wire-crsf)">PC → LTE → Pi → FC</text>
+    <text x="755" y="658" class="pin" font-size="10" fill="#555">Gamepad / RC sticks via UDP :2223</text>
+
+    <text x="740" y="685" class="pin" font-size="11" fill="var(--wire-telem)">FC → Pi → LTE → PC</text>
+    <text x="755" y="702" class="pin" font-size="10" fill="#555">Telemetry + GPS via UDP :2223</text>
+
+    <text x="740" y="729" class="pin" font-size="11" fill="var(--wire-cam)">Pi Camera → LTE → PC</text>
+    <text x="755" y="746" class="pin" font-size="10" fill="#555">H.264 / RTP stream via UDP :2222</text>
+  </g>
+
+</svg>
+</body>
+</html>

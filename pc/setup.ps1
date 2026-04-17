@@ -15,6 +15,7 @@
 #>
 
 $ErrorActionPreference = "Stop"
+$UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/125.0.0.0 Safari/537.36"
 $ROOT = Split-Path -Parent $PSScriptRoot
 if (-not (Test-Path "$ROOT\pc\UDP_Server\UDP_Server.sln")) {
     $ROOT = $PSScriptRoot
@@ -47,11 +48,11 @@ if (Test-Path "$GST_DIR\bin\gst-launch-1.0.exe") {
 
     if (-not (Test-Path $gstRuntime)) {
         Write-Host "  Downloading GStreamer runtime..."
-        Invoke-WebRequest -Uri "$baseUrl/msvc/gstreamer-1.0-msvc-x86_64-$GST_VER.msi" -OutFile $gstRuntime
+        Invoke-WebRequest -Uri "$baseUrl/msvc/gstreamer-1.0-msvc-x86_64-$GST_VER.msi" -OutFile $gstRuntime -UserAgent $UA
     }
     if (-not (Test-Path $gstDevel)) {
         Write-Host "  Downloading GStreamer development..."
-        Invoke-WebRequest -Uri "$baseUrl/msvc/gstreamer-1.0-devel-msvc-x86_64-$GST_VER.msi" -OutFile $gstDevel
+        Invoke-WebRequest -Uri "$baseUrl/msvc/gstreamer-1.0-devel-msvc-x86_64-$GST_VER.msi" -OutFile $gstDevel -UserAgent $UA
     }
 
     Write-Host "  Installing GStreamer runtime (this takes a few minutes)..."
@@ -74,7 +75,7 @@ if (Test-Path "$SDL_DIR\include\SDL.h") {
 
     if (-not (Test-Path $sdlZip)) {
         Write-Host "  Downloading SDL2..."
-        Invoke-WebRequest -Uri $sdlUrl -OutFile $sdlZip
+        Invoke-WebRequest -Uri $sdlUrl -OutFile $sdlZip -UserAgent $UA
     }
     Write-Host "  Extracting SDL2..."
     Expand-Archive -Path $sdlZip -DestinationPath "$DOWNLOAD\sdl_extract" -Force

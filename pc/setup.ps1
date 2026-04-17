@@ -109,11 +109,14 @@ if (-not (Test-Path $vswhere)) {
     Write-Host "  Download: https://visualstudio.microsoft.com/downloads/" -ForegroundColor Red
     Write-Host "  After installing, re-run this script." -ForegroundColor Red
 } else {
-    $vsPath = & $vswhere -latest -property installationPath
-    $msbuild = Join-Path $vsPath "MSBuild\Current\Bin\MSBuild.exe"
+    $vsPath = (& $vswhere -latest -property installationPath 2>$null) | Select-Object -First 1
+    $msbuild = $null
 
-    if (-not (Test-Path $msbuild)) {
-        $msbuild = Get-ChildItem "$vsPath\MSBuild" -Recurse -Filter "MSBuild.exe" | Select-Object -First 1 -ExpandProperty FullName
+    if ($vsPath) {
+        $msbuild = Join-Path $vsPath "MSBuild\Current\Bin\MSBuild.exe"
+        if (-not (Test-Path $msbuild)) {
+            $msbuild = Get-ChildItem "$vsPath\MSBuild" -Recurse -Filter "MSBuild.exe" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+        }
     }
 
     if ($msbuild -and (Test-Path $msbuild)) {

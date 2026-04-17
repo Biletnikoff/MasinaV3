@@ -3,15 +3,18 @@
     MasinaV3 Ground Station Setup Script
     Run this in PowerShell as Administrator on the Windows PC.
     
+    Prerequisites (install manually before running):
+      - GStreamer MSVC x86_64: https://gstreamer.freedesktop.org/download/
+        Install both runtime and development installers.
+      - Visual Studio 2022 with C++ desktop development workload
+
     What it does:
-      1. Downloads & installs GStreamer MSVC x64 (runtime + dev)
-      2. Downloads & extracts SDL2 development libraries
-      3. Clones the MasinaV3 repo (if not already present)
-      4. Patches project files to use local SDK paths
-      5. Compiles UDP_Server and UDP_Video (Release x64)
-      6. Creates Windows Firewall rules for UDP 2222-2224
-      7. Adds GStreamer to system PATH
-      8. Creates desktop launch shortcuts
+      1. Downloads & extracts SDL2 development libraries
+      2. Patches project files to use local SDK paths
+      3. Compiles UDP_Server and UDP_Video (Release x64)
+      4. Creates Windows Firewall rules for UDP 2222-2224
+      5. Adds GStreamer to system PATH
+      6. Creates desktop launch shortcuts
 #>
 
 $ErrorActionPreference = "Stop"
@@ -22,7 +25,6 @@ if (-not (Test-Path "$ROOT\pc\UDP_Server\UDP_Server.sln")) {
 }
 
 $SDK_DIR    = "C:\sdk"
-$GST_VER    = "1.24.12"
 $GST_DIR    = "C:\gstreamer\1.0\msvc_x86_64"
 $SDL_DIR    = "$SDK_DIR\SDL2"
 $DOWNLOAD   = "$env:TEMP\masina_setup"
@@ -35,37 +37,24 @@ New-Item -ItemType Directory -Force -Path $DOWNLOAD | Out-Null
 New-Item -ItemType Directory -Force -Path $SDK_DIR   | Out-Null
 
 # -------------------------------------------------------------------
-# 1. GStreamer
+# 1. Check GStreamer
 # -------------------------------------------------------------------
-Write-Host "[1/7] GStreamer..." -ForegroundColor Yellow
+Write-Host "[1/6] Checking GStreamer..." -ForegroundColor Yellow
 
 if (Test-Path "$GST_DIR\bin\gst-launch-1.0.exe") {
-    Write-Host "  GStreamer already installed at $GST_DIR" -ForegroundColor Green
+    Write-Host "  GStreamer found at $GST_DIR" -ForegroundColor Green
 } else {
-    $gstRuntime = "$DOWNLOAD\gstreamer-runtime.msi"
-    $gstDevel   = "$DOWNLOAD\gstreamer-devel.msi"
-    $baseUrl    = "https://gstreamer.freedesktop.org/data/pkg/windows/$GST_VER"
-
-    if (-not (Test-Path $gstRuntime)) {
-        Write-Host "  Downloading GStreamer runtime..."
-        Invoke-WebRequest -Uri "$baseUrl/msvc/gstreamer-1.0-msvc-x86_64-$GST_VER.msi" -OutFile $gstRuntime -UserAgent $UA
-    }
-    if (-not (Test-Path $gstDevel)) {
-        Write-Host "  Downloading GStreamer development..."
-        Invoke-WebRequest -Uri "$baseUrl/msvc/gstreamer-1.0-devel-msvc-x86_64-$GST_VER.msi" -OutFile $gstDevel -UserAgent $UA
-    }
-
-    Write-Host "  Installing GStreamer runtime (this takes a few minutes)..."
-    Start-Process msiexec.exe -ArgumentList "/i `"$gstRuntime`" /quiet /norestart" -Wait
-    Write-Host "  Installing GStreamer development..."
-    Start-Process msiexec.exe -ArgumentList "/i `"$gstDevel`" /quiet /norestart" -Wait
-    Write-Host "  GStreamer installed" -ForegroundColor Green
+    Write-Host "  GStreamer not found at $GST_DIR" -ForegroundColor Red
+    Write-Host "  Download and install both runtime + development MSVC x86_64 installers from:" -ForegroundColor Red
+    Write-Host "  https://gstreamer.freedesktop.org/download/" -ForegroundColor Red
+    Write-Host "  Then re-run this script." -ForegroundColor Red
+    exit 1
 }
 
 # -------------------------------------------------------------------
 # 2. SDL2
 # -------------------------------------------------------------------
-Write-Host "[2/7] SDL2..." -ForegroundColor Yellow
+Write-Host "[2/6] SDL2..." -ForegroundColor Yellow
 
 if (Test-Path "$SDL_DIR\include\SDL.h") {
     Write-Host "  SDL2 already present at $SDL_DIR" -ForegroundColor Green
@@ -89,7 +78,7 @@ if (Test-Path "$SDL_DIR\include\SDL.h") {
 # -------------------------------------------------------------------
 # 3. Patch project files
 # -------------------------------------------------------------------
-Write-Host "[3/7] Patching project files..." -ForegroundColor Yellow
+Write-Host "[3/6] Patching project files..." -ForegroundColor Yellow
 
 $serverProj = "$ROOT\pc\UDP_Server\UDP_Server.vcxproj"
 $videoProj  = "$ROOT\pc\UDP_Video\UDP_Video.vcxproj"
@@ -112,7 +101,7 @@ if (Test-Path $videoProj) {
 # -------------------------------------------------------------------
 # 4. Compile
 # -------------------------------------------------------------------
-Write-Host "[4/7] Compiling..." -ForegroundColor Yellow
+Write-Host "[4/6] Compiling..." -ForegroundColor Yellow
 
 $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
 if (-not (Test-Path $vswhere)) {
@@ -152,7 +141,7 @@ if (-not (Test-Path $vswhere)) {
 # -------------------------------------------------------------------
 # 5. Firewall rules
 # -------------------------------------------------------------------
-Write-Host "[5/7] Firewall rules..." -ForegroundColor Yellow
+Write-Host "[5/6] Firewall rules..." -ForegroundColor Yellow
 
 $rules = @(
     @{ Name="MasinaV3 Video (UDP 2222) In";   Dir="Inbound";  Port=2222 },
@@ -176,7 +165,7 @@ foreach ($r in $rules) {
 # -------------------------------------------------------------------
 # 6. Add GStreamer to PATH
 # -------------------------------------------------------------------
-Write-Host "[6/7] PATH..." -ForegroundColor Yellow
+Write-Host "[6/6] PATH & launchers..." -ForegroundColor Yellow
 
 $gstBin = "$GST_DIR\bin"
 $currentPath = [Environment]::GetEnvironmentVariable("Path", "Machine")
@@ -188,10 +177,7 @@ if ($currentPath -like "*$gstBin*") {
     Write-Host "  Added $gstBin to system PATH" -ForegroundColor Green
 }
 
-# -------------------------------------------------------------------
-# 7. Create launcher scripts on Desktop
-# -------------------------------------------------------------------
-Write-Host "[7/7] Creating launcher scripts..." -ForegroundColor Yellow
+Write-Host "  Creating launcher scripts..." -ForegroundColor Yellow
 
 $desktop = [Environment]::GetFolderPath("Desktop")
 
@@ -258,7 +244,6 @@ Write-Host "  MasinaV3_Video.bat   - Video receiver only" -ForegroundColor White
 Write-Host "  MasinaV3_Server.bat  - Controls/telemetry server only" -ForegroundColor White
 Write-Host ""
 Write-Host "Remaining manual steps:" -ForegroundColor Yellow
-Write-Host "  1. Install No-IP DUC: https://www.noip.com/download?page=win" -ForegroundColor White
-Write-Host "  2. Forward UDP ports 2222-2224 on your router to this PC's local IP" -ForegroundColor White
-Write-Host "  3. Plug in your Xbox/PlayStation controller" -ForegroundColor White
+Write-Host "  1. Forward UDP ports 2222-2224 on your router to this PC's local IP" -ForegroundColor White
+Write-Host "  2. Plug in your Xbox/PlayStation controller" -ForegroundColor White
 Write-Host ""

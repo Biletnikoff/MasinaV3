@@ -158,11 +158,9 @@ void DrawOverlay(HWND hwnd, const char* telemetryStr) //DrawText already exists
 
 		//swprintf(telemetryBuffer, 128, L"CPU %4d °C\n↓ %4d KB/s\n↑ %4d KB/s\nRSSI: %4d\nSNR: %5d", temp, read_speed, write_speed, rssi, snr);
 	}
-	else if (telemetry.size() >= 6 && telemetry.compare(0, 6, "+QENG:") == 0) 
+	else if (telemetry.size() >= 6 && telemetry.compare(0, 6, "+CPSI:") == 0) 
 	{
-		if (telemetry.size() >= 30) {
-			QENG = telemetry.substr(30);
-		}
+		QENG = telemetry.substr(7);
 	}
 	static wchar_t leftBuffer[512], centerBuffer[512], rightBuffer[512], centerBottomBuffer[512];
 	time_t currentTime;

@@ -231,8 +231,8 @@ void TraccarUpdate()
 			std::lock_guard<std::mutex> lock(sharedMutex);
 			snprintf(requestPath, sizeof(requestPath), "/?id=0192837465&timestamp=%d&lat=%f&lon=%f&speed=%d&altitude=%d", (int)time(NULL), ((double)tel.latitude) / 10000000.0, ((double)tel.longitude) / 10000000.0, tel.groundspeed / 10, tel.altitude);
 		}
-		if (Http_Post("your.ddns.net", 8082, requestPath, NULL, 0, buffer, sizeof(buffer)) < 0)
-			fprintf(stderr, "send location to traccar fail\n");
+		//if (Http_Post("your.ddns.net", 8082, requestPath, NULL, 0, buffer, sizeof(buffer)) < 0)
+		//	fprintf(stderr, "send location to traccar fail\n");
 		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	}
 }

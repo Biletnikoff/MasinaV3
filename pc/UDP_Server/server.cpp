@@ -14,7 +14,7 @@ std::mutex sharedMutex;
 int serCells = 4; // 4S default
 double homeLat = 48.413256, homeLon = 17.692330;
 double pinLat = 48.477106, pinLon = 17.553499;
-const char* TARGET_WINDOW_NAME = "Direct3D11 renderer";
+const char* TARGET_WINDOW_NAME = "Direct3D12 renderer";
 //
 #ifndef NO_CONTROLLER
 Controller controller(0);

@@ -219,7 +219,7 @@ int main()
 
 	std::thread PiTelemetryThread(PiTelemetry);
 
-	const char* serialDev = "/dev/ttyAMA0";
+	const char* serialDev = "/dev/serial0";
 	int serialPort = open(serialDev, O_RDWR);
 	if (serialPort < 0) {
 		fprintf(stderr, "Warning: could not open %s (%s) - running without flight controller\n", serialDev, strerror(errno));

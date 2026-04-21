@@ -219,39 +219,42 @@ int main()
 
 	std::thread PiTelemetryThread(PiTelemetry);
 
-	int serialPort = open("/dev/ttyS2", O_RDWR);
-	int baudrate = 420000;
-	struct termios2 tio;
-	ioctl(serialPort, TCGETS2, &tio);
-	tio.c_cflag &= ~CBAUD;
-	tio.c_cflag |= BOTHER;
-	tio.c_ispeed = baudrate;
-	tio.c_ospeed = baudrate;
-	tio.c_cc[VTIME] = 10;
-	tio.c_cc[VMIN] = 64;
+	const char* serialDev = "/dev/ttyAMA0";
+	int serialPort = open(serialDev, O_RDWR);
+	if (serialPort < 0) {
+		fprintf(stderr, "Warning: could not open %s (%s) - running without flight controller\n", serialDev, strerror(errno));
+	} else {
+		int baudrate = 420000;
+		struct termios2 tio;
+		ioctl(serialPort, TCGETS2, &tio);
+		tio.c_cflag &= ~CBAUD;
+		tio.c_cflag |= BOTHER;
+		tio.c_ispeed = baudrate;
+		tio.c_ospeed = baudrate;
+		tio.c_cc[VTIME] = 10;
+		tio.c_cc[VMIN] = 64;
 
-	tio.c_cflag = 7344;
-	tio.c_iflag = 0;
-	tio.c_oflag = 0;
-	tio.c_lflag = 0;
+		tio.c_cflag = 7344;
+		tio.c_iflag = 0;
+		tio.c_oflag = 0;
+		tio.c_lflag = 0;
 
+		if (ioctl(serialPort, TCSETS2, &tio) != 0)
+			printf("serial error");
 
-	if (ioctl(serialPort, TCSETS2, &tio) != 0)
-		printf("serial error");
-
-	// Set the serial port to non-blocking mode
-	int flags = fcntl(serialPort, F_GETFL, 0);
-	if (flags == -1) {
-		perror("Failed to get file status flags");
-		close(serialPort);
-		return 1;
-	}
-
-	flags |= O_NONBLOCK;
-	if (fcntl(serialPort, F_SETFL, flags) == -1) {
-		perror("Failed to set file status flags");
-		close(serialPort);
-		return 1;
+		int flags = fcntl(serialPort, F_GETFL, 0);
+		if (flags == -1) {
+			perror("Failed to get file status flags");
+			close(serialPort);
+			serialPort = -1;
+		} else {
+			flags |= O_NONBLOCK;
+			if (fcntl(serialPort, F_SETFL, flags) == -1) {
+				perror("Failed to set file status flags");
+				close(serialPort);
+				serialPort = -1;
+			}
+		}
 	}
 
 	struct sockaddr_in serverAddr;
@@ -267,12 +270,14 @@ int main()
 		static auto lastValidPayload = std::chrono::high_resolution_clock::now();
 		static auto lastSentPayload = std::chrono::high_resolution_clock::now();
 		uint8_t serialBuffer[128] = { 0 };
-		int serialReadBytes = read(serialPort, &serialBuffer, sizeof(serialBuffer));
+		int serialReadBytes = -1;
+		if (serialPort >= 0)
+			serialReadBytes = read(serialPort, &serialBuffer, sizeof(serialBuffer));
 		try
 		{
 			if (serialReadBytes < 0)
 			{
-				if (errno == EAGAIN || errno == EWOULDBLOCK)
+				if (errno == EAGAIN || errno == EWOULDBLOCK || serialPort < 0)
 				{
 				}
 				else
@@ -356,7 +361,7 @@ int main()
 						payload[23] = ((channels[14] >> 6) & 0x1F) | ((channels[15] & 0x07) << 5);
 						payload[24] = ((channels[15] >> 3) & 0xFF);
 						payload[25] = CRC(payload, 2, 0x18 - 1);
-						ssize_t bytes_written = write(serialPort, payload, 26);
+						ssize_t bytes_written = (serialPort >= 0) ? write(serialPort, payload, 26) : 26;
 						/*static uint8_t linkPayload[15] = "\xC8\x0C\x14\x10\x17\x64\x05\x00\x01\x01\x00\x00\x00\x59"; //Dummy data
 						bytes_written = write(serialPort, linkPayload, 14);*/
 						lastSentPayload = currentTime;
@@ -436,7 +441,8 @@ int main()
 		}
 	}
 	close(sockfd);
-	close(serialPort);
+	if (serialPort >= 0)
+		close(serialPort);
 	PiTelemetryThread.join();
 	return 0;
 }

@@ -47,10 +47,9 @@ NetworkUsage getNetworkUsage()
     return usage;
 }
 
-// Function to read CPU temperature from sysfs
 int get_cpu_temperature()
 {
-    std::ifstream file("/sys/devices/virtual/mstar/msys/TEMP_R");
+    std::ifstream file("/sys/class/thermal/thermal_zone0/temp");
     if (!file.is_open())
     {
         std::cerr << "Error: Unable to open temperature file." << std::endl;
@@ -61,18 +60,9 @@ int get_cpu_temperature()
     std::getline(file, line);
     file.close();
 
-    // Parse the temperature value from the line
-    size_t pos = line.find("Temperature ");
-    if (pos == std::string::npos)
-    {
-        std::cerr << "Error: Unexpected file format." << std::endl;
-        return -1;
-    }
-
     try
     {
-        int temperature = std::stoi(line.substr(pos + 12)); // Extract temperature after "Temperature "
-        return temperature;
+        return std::stoi(line) / 1000;
     }
     catch (const std::exception& e)
     {
@@ -82,54 +72,38 @@ int get_cpu_temperature()
 }
 
 void getSignalStrength(int& rssi, int& snr) {
-    const char* command = "qmicli --device=/dev/cdc-wdm0 --nas-get-signal-strength";
+    const char* command = "mmcli -m 0 --signal-get 2>/dev/null";
 
-    // Open a pipe to execute the command
     FILE* fp = popen(command, "r");
     if (fp == nullptr) {
-        std::cerr << "Failed to run command" << std::endl;
-        rssi = -1;  // Return -1 if command fails
-        snr = -1;   // Return -1 if command fails
+        rssi = -1;
+        snr = -1;
         return;
     }
 
-    // Read the output of the command line by line
     char buffer[256];
     std::string output;
     while (fgets(buffer, sizeof(buffer), fp) != nullptr) {
         output += buffer;
     }
-	std::cout<< buffer;
-    // Close the pipe
-    fclose(fp);
+    pclose(fp);
 
-    // Log the raw output for debugging
-    std::cout << "Command Output:\n" << output << std::endl;
-
-    // Use regex to extract RSSI and SNR values
-    std::regex rssiRegex("RSSI:\\s*.*?([-\\d]+) dBm");
-    std::regex snrRegex("SNR:\\s*.*?([\\d\\.]+) dB");
+    std::regex rssiRegex("rssi:\\s*([-\\d\\.]+)");
+    std::regex snrRegex("snr:\\s*([-\\d\\.]+)");
     std::smatch match;
 
-    // Parse RSSI
-    if (std::regex_search(output, match, rssiRegex) && match.size() > 1) {
-        rssi = std::stoi(match[1].str());
-    } else {
-        std::cerr << "Failed to parse RSSI" << std::endl;
+    if (std::regex_search(output, match, rssiRegex) && match.size() > 1)
+        rssi = static_cast<int>(std::stof(match[1].str()));
+    else
         rssi = -1;
-    }
 
-    // Parse SNR
-    if (std::regex_search(output, match, snrRegex) && match.size() > 1) {
+    if (std::regex_search(output, match, snrRegex) && match.size() > 1)
         snr = static_cast<int>(std::stof(match[1].str()));
-    } else {
-        std::cerr << "Failed to parse SNR" << std::endl;
+    else
         snr = -1;
-    }
 }
 std::string getServingCellInfo() {
-    // Command to send AT command and read response from /dev/ttyUSB2
-    const char* command = "at_command";
+    const char* command = "/home/zodiac118/client/at_command";
     
     // Open a pipe to execute the command
     FILE* fp = popen(command, "r");

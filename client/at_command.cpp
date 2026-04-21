@@ -8,7 +8,7 @@
 #include <algorithm>
 
 const std::string SERIAL_PORT = "/dev/ttyUSB2";
-const std::string AT_COMMAND = "AT+QENG=\"servingcell\"\r\n";
+const std::string AT_COMMAND = "AT+CPSI?\r\n";
 
 int configure_serial_port(int fd) {
     struct termios tty;
@@ -57,8 +57,7 @@ std::string read_serial_response(int fd) {
         return "";
     }
 
-    // Find and extract the +QENG line
-    size_t start_pos = full_response.find("+QENG: ");
+    size_t start_pos = full_response.find("+CPSI: ");
     if (start_pos == std::string::npos) {
         return "";
     }

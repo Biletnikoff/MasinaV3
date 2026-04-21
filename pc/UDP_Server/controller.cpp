@@ -54,15 +54,23 @@ void Controller::Poll()
 		static int num_axes = SDL_JoystickNumAxes(sdlController);
 		static int num_buttons = SDL_JoystickNumButtons(sdlController);
 		static bool lastButton = false;
-		if (num_axes < 8 || num_buttons < 1)
-			std::cerr << "[Controller] Unsupported controller - not enough axis/buttons (min 8/1)\n";
-		for (int i = 0; i < num_axes; ++i)
+		static bool lastRemoteBtn = false;
+		if (num_axes < 6 || num_buttons < 1)
+			std::cerr << "[Controller] Unsupported controller - not enough axis/buttons (min 6/1)\n";
+		for (int i = 0; i < num_axes && i < 8; ++i)
 			axis[i] = SDL_JoystickGetAxis(sdlController, i);
-		for (int i = 0; i < num_buttons; ++i)
+		for (int i = 0; i < num_buttons && i < 24; ++i)
 			buttons[i] = SDL_JoystickGetButton(sdlController, i);
+		if (num_axes < 7) {
+			axis[6] = remote ? 32767 : -32768;
+			axis[7] = buttons[3] ? 32767 : -32768;
+		}
 		if(buttons[0] && !lastButton)
 			failsafeMode = (FSMODE)(!failsafeMode);
 		lastButton = buttons[0];
+		if(buttons[1] && !lastRemoteBtn)
+			remote = !remote;
+		lastRemoteBtn = buttons[1];
 	}
 	else
 	{

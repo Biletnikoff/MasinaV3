@@ -104,14 +104,15 @@ int main(int argc, char* argv[])
 	std::thread traccarThread(TraccarUpdate);
 
 	static std::vector<uint8_t> buffer;
+	bool clientSeen = false;
+	sockaddr_in clientAddr1 = {};
+	sockaddr_in clientAddr2 = {};
 	while (true)
 	{
 #ifndef NO_CONTROLLER
 		controller.Poll();
 		controller.Deadzone();
 #endif
-		sockaddr_in clientAddr1;
-		sockaddr_in clientAddr2;
 		{
 			int clientAddrLen1 = sizeof(clientAddr1);
 
@@ -136,10 +137,11 @@ int main(int argc, char* argv[])
 			else
 			{
 				clientAddr2.sin_addr = clientAddr1.sin_addr;
+				clientSeen = true;
 				buffer.insert(buffer.end(), &rxbuffer1[0], &rxbuffer1[bytesRead]);
 				CheckPayloads(buffer);
 			}
-			if (sendto(serverSocket1, messageToSend.c_str(), messageToSend.length(), 0, (struct sockaddr*)&clientAddr1, clientAddrLen1) == SOCKET_ERROR)
+			if (clientSeen && sendto(serverSocket1, messageToSend.c_str(), messageToSend.length(), 0, (struct sockaddr*)&clientAddr1, clientAddrLen1) == SOCKET_ERROR)
 			{
 				int err = WSAGetLastError();
 				LPSTR errorMessage = nullptr;

@@ -121,18 +121,20 @@ if (-not (Test-Path $vswhere)) {
 
     if ($msbuild -and (Test-Path $msbuild)) {
         $sln = "$ROOT\pc\UDP_Server\UDP_Server.sln"
-        Write-Host "  Building Release|x64..."
-
-        # Copy SDL2.dll next to output so exe can find it
         $outDir = "$ROOT\pc\UDP_Server\x64\Release"
         New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
+        if (Test-Path "$SDL_DIR\lib\x64\SDL2.dll") {
+            Copy-Item "$SDL_DIR\lib\x64\SDL2.dll" -Destination $outDir -Force
+            Write-Host "  Copied SDL2.dll to output directory" -ForegroundColor Green
+        } else {
+            Write-Host "  WARNING: SDL2.dll not found at $SDL_DIR\lib\x64\" -ForegroundColor Red
+        }
+
+        Write-Host "  Building Release|x64..."
         & $msbuild $sln /p:Configuration=Release /p:Platform=x64 /m /v:minimal
         if ($LASTEXITCODE -eq 0) {
             Write-Host "  Build succeeded" -ForegroundColor Green
-            if (Test-Path "$SDL_DIR\lib\x64\SDL2.dll") {
-                Copy-Item "$SDL_DIR\lib\x64\SDL2.dll" -Destination $outDir -Force
-            }
         } else {
             Write-Host "  Build failed. Open UDP_Server.sln in Visual Studio to debug." -ForegroundColor Red
         }
